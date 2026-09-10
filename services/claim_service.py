@@ -12,6 +12,7 @@ from database.queries import (
     update_item_status,
     update_match_status,
 )
+from services.notification_service import notify_claim_approved
 
 
 def _is_claim_blocked(lost_item_id: int, found_item_id: int) -> bool:
@@ -56,6 +57,15 @@ def approve_claim(
         notes=notes,
         reviewed_by_user_id=reviewed_by_user_id,
     )
+
+    # Best-effort: let both the lost-item owner and found-item owner know the
+    # match is staff-verified. A notification failure must never break the
+    # approval itself.
+    try:
+        notify_claim_approved(claim)
+    except Exception:
+        pass
+
     return True
 
 

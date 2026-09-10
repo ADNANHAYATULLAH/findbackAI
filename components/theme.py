@@ -191,6 +191,190 @@ def inject_css() -> None:
         }}
         .fb-dot-on  {{ background: #22C55E; box-shadow: 0 0 0 3px rgba(34,197,94,0.15); }}
         .fb-dot-off {{ background: #CBD5E1; }}
+
+        /* ---- Notification cards ---- */
+        .fb-notif-unread {{
+            border-left: 4px solid {_PRIMARY};
+            background: #F8F8FF;
+        }}
+        .fb-notif-read {{
+            border-left: 4px solid {_BORDER};
+            opacity: 0.82;
+        }}
+        .fb-notif-title {{
+            font-weight: 700;
+            font-size: 0.96rem;
+            color: #1E1B4B;
+            margin-bottom: 0.25rem;
+        }}
+        .fb-notif-new-tag {{
+            display: inline-block;
+            margin-left: 0.4rem;
+            font-size: 0.66rem;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+            color: {_PRIMARY_DARK};
+            background: #E0E7FF;
+            padding: 0.05rem 0.5rem;
+            border-radius: 999px;
+            vertical-align: middle;
+        }}
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def inject_login_css() -> None:
+    """Inject the standalone, professional-looking login page theme.
+
+    Kept separate from `inject_css()` so it never leaks into the main app
+    shell - it hides Streamlit chrome (menu/footer/header) and narrows the
+    layout to a centered auth card, which is only appropriate on the
+    sign-in screen.
+    """
+    st.markdown(
+        f"""
+        <style>
+        #MainMenu {{ visibility: hidden; }}
+        footer {{ visibility: hidden; }}
+        header {{ visibility: hidden; }}
+
+        .stApp {{
+            background: linear-gradient(180deg, #F7F8FB 0%, #EEF2F8 100%);
+        }}
+        .block-container {{
+            max-width: 520px;
+            padding-top: 3.2rem;
+            padding-bottom: 2.5rem;
+        }}
+
+        .fb-login-shell {{
+            width: min(100%, 480px);
+            margin: 0 auto;
+        }}
+
+        .fb-login-logo {{
+            height: 78px; width: 78px;
+            border-radius: 22px;
+            background: linear-gradient(135deg, {_PRIMARY}, {_PRIMARY_DARK});
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2.2rem;
+            margin: 0 auto 1.3rem auto;
+            box-shadow: 0 18px 30px rgba(79, 70, 229, 0.22);
+            border: 2px solid rgba(255,255,255,0.22);
+        }}
+        .fb-login-title {{
+            text-align: center;
+            font-size: clamp(2.2rem, 4vw, 3.1rem);
+            line-height: 1.08;
+            font-weight: 800;
+            letter-spacing: -0.06em;
+            color: #121826;
+            margin-bottom: 0.4rem;
+        }}
+        .fb-login-subtitle {{
+            text-align: center;
+            font-size: 1.02rem;
+            color: #5F6A7F;
+            margin-bottom: 2rem;
+            font-weight: 500;
+        }}
+
+        .fb-login-card {{
+            background: transparent;
+            border: none;
+            border-radius: 0;
+            padding: 0;
+            box-shadow: none;
+        }}
+        .fb-login-heading {{
+            font-size: clamp(2rem, 3vw, 2.7rem);
+            line-height: 1.08;
+            font-weight: 700;
+            letter-spacing: -0.05em;
+            color: #111827;
+            margin: 0 0 1.3rem 0;
+            text-align: left;
+        }}
+
+        .fb-login-card [data-testid="stForm"] {{
+            background: transparent;
+            border: none;
+            padding: 0;
+            margin: 0;
+        }}
+        .fb-login-card .stTextInput > div > div > input,
+        .fb-login-card .stTextInput > div > div > div > input,
+        .fb-login-card .stNumberInput > div > div > input {{
+            border-radius: 12px;
+            border: 1px solid #D9DEE8;
+            background: #F3F5F8;
+            padding: 0.85rem 0.9rem;
+            color: #111827;
+            font-size: 1.05rem;
+            min-height: 54px;
+            box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.04);
+        }}
+        .fb-login-card .stTextInput > label,
+        .fb-login-card .stTextInput > div > label,
+        .fb-login-card .stTextInput label,
+        .fb-login-card .stTextInput p,
+        .fb-login-card .stTextInput > div > label p {{
+            font-size: 0.98rem;
+            color: #435066;
+            font-weight: 600;
+            margin-bottom: 0.45rem;
+        }}
+        .fb-login-card .stTextInput > div > div:focus-within,
+        .fb-login-card .stTextInput > div > div > input:focus {{
+            border-color: rgba(79, 70, 229, 0.55) !important;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12) !important;
+        }}
+
+        .fb-login-card .stButton > button {{
+            width: 100%;
+            min-height: 52px;
+            border-radius: 12px;
+            border: 1px solid rgba(17, 24, 39, 0.06);
+            margin-top: 0.8rem;
+            padding: 0.75rem 1rem;
+            font-size: 1.08rem;
+            font-weight: 700;
+            color: #111827;
+            background: #F3F4F6;
+            box-shadow: 0 1px 1px rgba(15, 23, 42, 0.02);
+            transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+        }}
+        .fb-login-card .stButton > button:hover {{
+            transform: translateY(-1px);
+            background: #EFF2F7;
+            box-shadow: 0 10px 18px rgba(15, 23, 42, 0.08);
+        }}
+
+        .fb-login-demo {{
+            margin-top: 1.7rem;
+            padding: 1rem 1.1rem;
+            background: #F3F4F6;
+            border: 1px solid #E5E7EB;
+            border-radius: 12px;
+            font-size: 0.82rem;
+            color: #475569;
+            line-height: 1.7;
+        }}
+        .fb-login-demo-label {{
+            color: #1F2937;
+            font-size: 0.82rem;
+            font-weight: 700;
+            margin-bottom: 0.35rem;
+        }}
+        .fb-login-footer {{
+            text-align: center;
+            font-size: 0.8rem;
+            color: #7B8797;
+            margin-top: 1.5rem;
+            padding-top: 0.1rem;
+        }}
         </style>
         """,
         unsafe_allow_html=True,
@@ -268,3 +452,15 @@ def card_open() -> None:
 
 def card_close() -> None:
     st.markdown("</div>", unsafe_allow_html=True)
+
+
+def notification_card_open(unread: bool) -> None:
+    """Open a `.fb-card` div styled for a notification (unread vs read)."""
+    cls = "fb-notif-unread" if unread else "fb-notif-read"
+    st.markdown(f'<div class="fb-card {cls}">', unsafe_allow_html=True)
+
+
+def render_notification_title(title: str, unread: bool) -> None:
+    """Render a notification's title, with a small 'NEW' tag when unread."""
+    tag = '<span class="fb-notif-new-tag">NEW</span>' if unread else ""
+    st.markdown(f'<div class="fb-notif-title">{title}{tag}</div>', unsafe_allow_html=True)

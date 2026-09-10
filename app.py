@@ -19,7 +19,9 @@ from components.theme import (
     card_close,
     card_open,
     inject_css,
+    notification_card_open,
     render_match_badge,
+    render_notification_title,
     render_provider_status,
     render_score_bar,
     render_sidebar_brand,
@@ -30,9 +32,14 @@ from database.queries import (
     get_item,
     get_item_features,
     get_items_by_type,
+    get_notifications,
     get_recent_items,
     get_stats,
+    get_unread_notification_count,
+    get_user_by_id,
     list_claims,
+    mark_all_notifications_read,
+    mark_notification_read,
 )
 from services.claim_service import approve_claim, create_claim_for_match, resolve_claim_handover
 from services.item_service import create_item
@@ -72,10 +79,11 @@ _NAV_ITEMS = [
     ("Report Lost", "📤  Report Lost", "user"),
     ("Report Found", "📥  Report Found", "user"),
     ("My Reports", "📋  My Reports", "user"),
+    ("Notifications", "🔔  Notifications", "user"),
     ("Find Matches", "🔎  Find Matches", "staff"),
     ("Browse Items", "🗂️  Browse Items", "user"),
     ("Potential Claims", "📌  Potential Claims", "staff"),
-    ("User Management", "👥  User Management", "admin"),
+    ("User Management", "👥  User Management", "staff"),
     ("Settings", "⚙️  Settings", "staff"),
     ("About", "ℹ️  About", "user"),
 ]
@@ -87,14 +95,27 @@ if page not in allowed_pages:
     page = "Home"
     st.session_state["nav"] = page
 
+
+def _item_reporter(item: dict | None) -> str:
+    if not item:
+        return "Unknown user"
+    user = get_user_by_id(item.get("user_id")) if item.get("user_id") is not None else None
+    if not user:
+        return "Unknown user"
+    return f"{user.get('full_name') or user.get('username')} ({user.get('username')})"
+
+
 render_sidebar_brand()
 
 st.sidebar.caption(f"Signed in as {current_user['full_name']} ({current_user['role']})")
+unread_count = get_unread_notification_count(current_user["id"])
 for pid, label, level in _NAV_ITEMS:
     if level == "admin" and not has_permission("admin"):
         continue
     if level == "staff" and not has_permission("staff"):
         continue
+    if pid == "Notifications" and unread_count:
+        label = f"🔔  Notifications ({unread_count})"
     selected = page == pid
     if st.sidebar.button(label, key=f"nav_{pid}", type="primary" if selected else "secondary", use_container_width=True):
         st.session_state["nav"] = pid
@@ -220,6 +241,8 @@ elif page == "Find Matches":
             with c2:
                 render_match_badge(r["final"], r["label"])
                 st.markdown(f"**{found['title']}** found near {found['location']}")
+                st.caption(f"Reported by: {_item_reporter(found)}")
+                st.caption(f"Lost item reported by: {_item_reporter(sel)}")
                 render_score_bar("Text Similarity", scores["text"])
                 render_score_bar("Image Similarity", scores["image"])
                 render_score_bar("Location", scores["location"])
@@ -235,6 +258,8 @@ elif page == "Find Matches":
             st.divider()
             st.subheader("AI Match Analysis")
             render_match_badge(match["final"], match["label"])
+            st.caption(f"Lost item: #{sel['id']} '{sel['title']}' — reported by {_item_reporter(sel)}")
+            st.caption(f"Found item: #{found['id']} '{found['title']}' — reported by {_item_reporter(found)}")
             prov = provider_manager.get_provider()
             if prov:
                 try:
@@ -283,6 +308,37 @@ elif page == "My Reports":
             st.caption(desc[:220] + ("..." if len(desc) > 220 else ""))
             card_close()
 
+elif page == "Notifications":
+    st.title("🔔 Notifications")
+    notifs = get_notifications(current_user["id"], limit=50)
+    unread = [n for n in notifs if not n["is_read"]]
+
+    col_a, col_b = st.columns([3, 1])
+    with col_a:
+        st.caption(f"{len(unread)} unread · {len(notifs)} total")
+    with col_b:
+        if unread and st.button("Mark all as read", use_container_width=True):
+            mark_all_notifications_read(current_user["id"])
+            st.rerun()
+
+    if not notifs:
+        st.info(
+            "No notifications yet. When staff confirms that your lost item has been found "
+            "(or that an item you found has an owner), you'll see it here."
+        )
+    else:
+        for n in notifs:
+            is_unread = not n["is_read"]
+            notification_card_open(is_unread)
+            render_notification_title(n["title"], is_unread)
+            st.write(n["message"])
+            st.caption(n["created_at"])
+            if is_unread:
+                if st.button("Mark as read", key=f"read_{n['id']}"):
+                    mark_notification_read(n["id"])
+                    st.rerun()
+            card_close()
+
 elif page == "Potential Claims":
     st.title("Potential Claims / Claim History")
     claims = list_claims()
@@ -302,8 +358,8 @@ elif page == "Potential Claims":
                 "resolved": "Resolved / Closed",
             }.get(claim.get("status"), claim.get("status"))
             st.markdown(f"### {status_label} · #{claim['id']}")
-            st.write(f"Lost Item: #{lost['id']} {lost['title']} ({lost['status']})")
-            st.write(f"Found Item: #{found['id']} {found['title']} ({found['status']})")
+            st.write(f"Lost Item: #{lost['id']} {lost['title']} ({lost['status']}) — reported by {_item_reporter(lost)}")
+            st.write(f"Found Item: #{found['id']} {found['title']} ({found['status']}) — reported by {_item_reporter(found)}")
             st.write(f"Verification: {claim.get('verification_status', 'pending')} | Handover: {claim.get('handover_status', 'pending')}")
             if claim.get("notes"):
                 st.caption(claim["notes"])
@@ -322,14 +378,27 @@ elif page == "Potential Claims":
             st.divider()
 
 elif page == "User Management":
-    if not has_permission("admin"):
-        st.error("Access denied. Administrator access required.")
+    if not has_permission("staff"):
+        st.error("Access denied. Staff or Administrator access required.")
         st.stop()
     st.title("User Management")
     from database.queries import get_all_users
     users = get_all_users()
     for user in users:
-        st.write(f"{user['username']} · {user['role']} · {user['full_name']}")
+        st.markdown(
+            f"""
+            <div class="fb-card">
+                <div><strong>{user.get('full_name') or user.get('username')}</strong></div>
+                <div style="margin-top: 0.35rem; color: #475569;">
+                    <div>Username: {user.get('username', '—')}</div>
+                    <div>Email: {user.get('email') or '—'}</div>
+                    <div>Phone: {user.get('phone_number') or '—'}</div>
+                    <div>Role: {user.get('role', '—')}</div>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
     st.caption("Demo credentials: admin/Admin@123, staff/Staff@123, user1/User@123, user2/User@123, user3/User@123")
 
 elif page == "Browse Items":

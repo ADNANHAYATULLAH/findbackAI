@@ -75,13 +75,28 @@ def require_auth() -> None:
 
 
 def render_login_screen() -> None:
-    st.set_page_config(page_title="FindBack AI", page_icon="🔍", layout="centered")
-    st.title("FindBack AI")
-    st.subheader("Sign in")
+    # NOTE: st.set_page_config() is already called once in app.py before this
+    # runs (Streamlit allows only a single call per script run), so this
+    # screen relies on components.theme.inject_login_css() to restyle the
+    # page into a centered auth card instead of calling it again here.
+    from components.theme import inject_login_css
+
+    inject_login_css()
+
+    st.markdown('<div class="fb-login-shell">', unsafe_allow_html=True)
+    st.markdown('<div class="fb-login-logo">🔍</div>', unsafe_allow_html=True)
+    st.markdown('<div class="fb-login-title">FindBack AI</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="fb-login-subtitle">AI-powered lost &amp; found for your campus</div>',
+        unsafe_allow_html=True,
+    )
+
+    st.markdown('<div class="fb-login-card">', unsafe_allow_html=True)
+    st.markdown('<div class="fb-login-heading">Sign in to your account</div>', unsafe_allow_html=True)
     with st.form("login_form", clear_on_submit=False):
-        username = st.text_input("Username")
-        password = st.text_input("Password", type="password")
-        submitted = st.form_submit_button("Login")
+        username = st.text_input("Username", placeholder="e.g. user1")
+        password = st.text_input("Password", type="password", placeholder="••••••••")
+        submitted = st.form_submit_button("Sign In")
 
     if submitted:
         ok, error = login(username, password)
@@ -90,4 +105,19 @@ def render_login_screen() -> None:
         else:
             st.error(error)
 
-    st.caption("Demo accounts: admin / Admin@123, staff / Staff@123, user1 / User@123, user2 / User@123, user3 / User@123")
+    st.markdown(
+        """
+        <div class="fb-login-demo">
+        <div class="fb-login-demo-label">Demo accounts</div>
+        admin / Admin@123 &nbsp;·&nbsp; staff / Staff@123<br>
+        user1 / User@123 &nbsp;·&nbsp; user2 / User@123 &nbsp;·&nbsp; user3 / User@123
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown(
+        '<div class="fb-login-footer">Semantic + visual + context matching, verified by staff.</div>',
+        unsafe_allow_html=True,
+    )
+    st.markdown("</div>", unsafe_allow_html=True)

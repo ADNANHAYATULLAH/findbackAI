@@ -28,6 +28,11 @@ def test_default_users_are_seeded_and_hashed():
     assert regular is not None
     assert regular["role"] == "Regular User"
 
+    assert admin["email"] == "admin@findback.ai"
+    assert admin["phone_number"] == "+1-555-0101"
+    assert staff["email"] == "staff@findback.ai"
+    assert staff["phone_number"] == "+1-555-0102"
+
 
 def test_claim_resolution_marks_items_closed_and_prevents_repeat_claims():
     from database.queries import insert_item
