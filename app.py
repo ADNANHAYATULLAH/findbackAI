@@ -386,6 +386,30 @@ elif page == "User Management":
         st.error("Access denied. Staff or Administrator access required.")
         st.stop()
     st.title("User Management")
+        st.divider()
+    st.subheader("⚠️ Reset FindBack Data")
+
+    st.warning(
+        "This will permanently delete all lost/found items, matches, claims, "
+        "notifications, AI usage records, and item features. User accounts will NOT be deleted."
+    )
+
+    reset_confirmation = st.text_input(
+        "Type RESET to enable the reset button:",
+        key="reset_confirmation"
+    )
+
+    if st.button(
+        "🗑️ Reset All FindBack Data",
+        type="secondary",
+        disabled=(reset_confirmation != "RESET")
+    ):
+        try:
+            reset_application_data()
+            st.success("✅ All FindBack data has been reset successfully.")
+            st.rerun()
+        except Exception as e:
+            st.error(f"Reset failed: {e}")
     from database.queries import get_all_users
     users = get_all_users()
     for user in users:
