@@ -46,7 +46,7 @@ class ProviderManager:
             if not hasattr(st, "secrets"):
                 return ""
             section = "GROQ" if provider_name == "Groq" else "HUGGINGFACE"
-            return st.secrets.get(section, {}).get("API_KEY", "")
+            return st.secrets.get("GROQ_API_KEY", "") or st.secrets.get(section, {}).get("API_KEY", "")
         except Exception:
             return ""
 

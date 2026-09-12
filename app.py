@@ -40,6 +40,7 @@ from database.queries import (
     list_claims,
     mark_all_notifications_read,
     mark_notification_read,
+    reset_application_data,
 )
 from services.claim_service import approve_claim, create_claim_for_match, resolve_claim_handover
 from services.item_service import create_item
@@ -79,8 +80,8 @@ _NAV_ITEMS = [
     ("Report Lost", "📤  Report Lost", "user"),
     ("Report Found", "📥  Report Found", "user"),
     ("My Reports", "📋  My Reports", "user"),
+    ("Find Matches", "🔎  Find Matches", "user"),
     ("Notifications", "🔔  Notifications", "user"),
-    ("Find Matches", "🔎  Find Matches", "staff"),
     ("Browse Items", "🗂️  Browse Items", "user"),
     ("Potential Claims", "📌  Potential Claims", "staff"),
     ("User Management", "👥  User Management", "staff"),
@@ -143,6 +144,9 @@ if page == "Home":
         if st.button("📥 Report Found Item", use_container_width=True):
             st.session_state["nav"] = "Report Found"
             st.rerun()
+    if st.button("🔎 Find Matches", use_container_width=True, type="primary"):
+        st.session_state["nav"] = "Find Matches"
+        st.rerun()
 
     stats = get_stats()
     st.divider()
@@ -382,6 +386,30 @@ elif page == "User Management":
         st.error("Access denied. Staff or Administrator access required.")
         st.stop()
     st.title("User Management")
+    st.divider()
+    st.subheader("⚠️ Reset FindBack Data")
+
+    st.warning(
+        "This will permanently delete all lost/found items, matches, claims, "
+        "notifications, AI usage records, and item features. User accounts will NOT be deleted."
+    )
+
+    reset_confirmation = st.text_input(
+        "Type RESET to enable the reset button:",
+        key="reset_confirmation"
+    )
+
+    if st.button(
+        "🗑️ Reset All FindBack Data",
+        type="secondary",
+        disabled=(reset_confirmation != "RESET")
+    ):
+        try:
+            reset_application_data()
+            st.success("✅ All FindBack data has been reset successfully.")
+            st.rerun()
+        except Exception as e:
+            st.error(f"Reset failed: {e}")
     from database.queries import get_all_users
     users = get_all_users()
     for user in users:
