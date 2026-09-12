@@ -81,7 +81,6 @@ _NAV_ITEMS = [
     ("My Reports", "📋  My Reports", "user"),
     ("Find Matches", "🔎  Find Matches", "user"),
     ("Notifications", "🔔  Notifications", "user"),
-    ("Find Matches", "🔎  Find Matches", "staff"),
     ("Browse Items", "🗂️  Browse Items", "user"),
     ("Potential Claims", "📌  Potential Claims", "staff"),
     ("User Management", "👥  User Management", "staff"),
