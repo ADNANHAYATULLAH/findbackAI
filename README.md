@@ -1,119 +1,114 @@
 # FindBack AI
 
-FindBack AI is a Streamlit-based lost-and-found platform that helps users report missing or recovered items, matches potential pairs using AI-powered similarity scoring, and manages claim resolution workflows with role-based access.
+FindBack AI is a Streamlit-based lost and found platform for campuses and organizations. It lets users report lost or found items, compare possible matches with AI-powered similarity analysis, and lets staff/admin review claims and ownership records.
 
 ## Overview
 
-The application combines:
+This app helps users:
 
-- a SQLite-backed reporting system for lost and found items
-- AI-assisted embedding and matching for candidate discovery
-- provider-based LLM analysis for item feature extraction
-- authentication and permissions for admin, staff, and regular users
-- claim handling for verified handovers and item resolution
+- report lost items
+- report found items
+- search for likely matches using semantic and rule-based scoring
+- review claim history and resolve ownership disputes
+- manage users with role-based access
+
+It is designed for real-world campus operations where staff need to quickly identify who reported what and which item pair is most likely related.
 
 ## Features
 
-- Report lost or found items with title, description, category, color, location, date, and optional image
-- AI-based item analysis and feature extraction using Groq or Hugging Face providers
-- Semantic match scoring with FAISS-based retrieval and rule-based fallback
-- Dashboard with summary counters for report volume and potential matches
-- Role-based access control for users, staff, and administrators
-- Claim workflow to approve or resolve a lost-found match
-- Demo user accounts for quick testing
+- Lost and found item reporting
+- AI-powered matching using similarity scoring
+- Role-based access for admin, staff, and regular users
+- Staff/admin visibility of user full names and contact details
+- Claim lifecycle management for review and handover approval
+- Demo credentials for quick testing
+- SQLite database that initializes automatically
 
-## Project Structure
+## Screenshots
 
-```text
-findback-ai/
-├── app.py                       # Streamlit application entry point
-├── auth.py                     # Authentication and permissions
-├── requirements.txt            # Python dependencies
-├── ai/                         # Embedding and provider logic
-│   ├── embeddings.py
-│   ├── groq_provider.py
-│   ├── huggingface_provider.py
-│   ├── matcher.py
-│   ├── prompts.py
-│   ├── provider.py
-│   └── schemas.py
-├── components/                 # UI theme and reusable visual components
-├── database/                  # SQLite schema and query layer
-│   ├── database.py
-│   └── queries.py
-├── services/                  # Business logic for items, matching, claims, and providers
-│   ├── claim_service.py
-│   ├── image_service.py
-│   ├── item_service.py
-│   ├── matching_service.py
-│   └── provider_service.py
-├── utils/                     # Security, validation, time, and location utilities
-├── tests/                     # Automated tests for auth and claims
-├── vector_store/               # FAISS index and metadata
-├── data/                      # Sample report data folders
-├── findbackAI_env/            # Local virtual environment
-├── findback.db                # SQLite database generated at runtime
-└── README.md                  # Project documentation
-```
+### Login screen
+
+![FindBack AI login screen](docs/screenshots/login-screen.png)
+
+### Match results screen
+
+![FindBack AI match results](docs/screenshots/match-results.png)
+
+### User management screen
+
+![FindBack AI user management](docs/screenshots/user-management.png)
 
 ## Tech Stack
 
-- Python 3.12
+- Python 3.10+
 - Streamlit
 - SQLite
-- Sentence Transformers
 - FAISS
-- Pillow
-- Pydantic
-- PyTorch
 - NumPy
+- PyTorch
+- Sentence transformers / embedding models
+- Pillow
 
 ## Prerequisites
 
-- Python 3.10+
-- A virtual environment is recommended
-- Optional AI API credentials for Groq or Hugging Face
+Before running the project, make sure you have:
 
-## Setup
+- Python 3.10 or newer
+- pip installed
+- git installed (optional, if cloning from GitHub)
+- a virtual environment tool
 
-1. Open a terminal in the project folder.
-2. Activate the workspace virtual environment:
+Optional:
 
-   Windows PowerShell:
+- AI provider API key for Groq or Hugging Face if you want the app to use live AI extraction and explanation features
 
-   ```powershell
-   .\findbackAI_env\Scripts\Activate.ps1
-   ```
+## Step-by-step setup for a new machine
 
-   Windows Command Prompt:
+### 1. Clone the project
 
-   ```bat
-   findbackAI_env\Scripts\activate.bat
-   ```
+```bash
+git clone https://github.com/mdanyal-khan/findbackAI.git
+cd findback-ai
+```
 
-3. Install dependencies:
+### 2. Create a virtual environment
 
-   ```bash
-   pip install -r requirements.txt
-   ```
+On Windows PowerShell:
 
-4. Optional: configure AI keys in a Streamlit secrets file for app-level AI access.
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+```
 
-   Create `.streamlit/secrets.toml` with content like:
+On Windows Command Prompt:
 
-   ```toml
-   [GROQ]
-   API_KEY = "your_groq_api_key"
-   ```
+```bat
+python -m venv .venv
+.venv\Scripts\activate.bat
+```
 
-   or:
+On macOS / Linux:
 
-   ```toml
-   [HUGGINGFACE]
-   API_KEY = "your_huggingface_api_key"
-   ```
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
 
-## Run the Application
+### 3. Install dependencies
+
+```bash
+pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+### 4. Verify installation
+
+```bash
+python --version
+pip list
+```
+
+### 5. Start the application
 
 From the project root:
 
@@ -121,15 +116,37 @@ From the project root:
 streamlit run app.py
 ```
 
-Then open the local URL displayed in the terminal, usually:
+The app will start and show a localhost URL in the terminal, usually:
 
 ```text
 http://localhost:8501
 ```
 
-## Demo Accounts
+Open that URL in your browser.
 
-The application seeds demo accounts automatically on first run:
+## Optional: configure AI provider keys
+
+If you want to use AI-powered item extraction or explanation features with a real provider, create a Streamlit secrets file in your project folder:
+
+```toml
+# .streamlit/secrets.toml
+[GROQ]
+API_KEY = "your_groq_api_key"
+```
+
+Or for Hugging Face:
+
+```toml
+# .streamlit/secrets.toml
+[HUGGINGFACE]
+API_KEY = "your_huggingface_api_key"
+```
+
+If you skip this step, the app can still run with demo/default behavior. The project will create its database automatically when launched.
+
+## Demo accounts
+
+The application seeds demo users automatically on first launch:
 
 | Username | Password | Role |
 | --- | --- | --- |
@@ -139,30 +156,68 @@ The application seeds demo accounts automatically on first run:
 | user2 | User@123 | Regular User |
 | user3 | User@123 | Regular User |
 
-## Usage
+## How to use the app
 
-1. Sign in with a demo account.
-2. Navigate to "Report Lost" or "Report Found" to create an item report.
-3. Use the matching workflow to discover likely pairings for lost items.
-4. Review and resolve claims as staff or admin.
-5. Adjust provider settings under the app settings area if you want to use a different AI provider or personal key.
+1. Sign in using one of the demo accounts.
+2. Choose Report Lost or Report Found.
+3. Add item details, optional photo, and location.
+4. Go to Find Matches to compare a lost item with possible found items.
+5. Staff/admin can review the item reporter names and contact information.
+6. Approve or resolve matching claims from the claim review section.
 
-## Testing
+## Project structure
 
-Run the automated tests with:
+```text
+findback-ai/
+├── app.py
+├── auth.py
+├── requirements.txt
+├── README.md
+├── .gitignore
+├── ai/
+│   ├── embeddings.py
+│   ├── groq_provider.py
+│   ├── huggingface_provider.py
+│   ├── matcher.py
+│   ├── prompts.py
+│   ├── provider.py
+│   └── schemas.py
+├── components/
+├── data/
+├── database/
+│   ├── database.py
+│   └── queries.py
+├── docs/
+│   └── screenshots/
+├── services/
+│   ├── claim_service.py
+│   ├── image_service.py
+│   ├── item_service.py
+│   ├── matching_service.py
+│   └── provider_service.py
+│   └── notification_service.py
+├── tests/
+├── utils/
+├── vector_store/
+├── findback.db
+└── .streamlit/
+```
+
+## Running tests
+
+To run the automated tests:
 
 ```bash
 pytest
 ```
 
-The current test suite covers default user seeding and claim resolution logic.
-
 ## Notes
 
-- The application auto-creates its SQLite database on launch if it does not already exist.
-- Matching uses semantic similarity and weighted scoring across text, category, location, time, and image signals.
-- If no AI provider is available, the app falls back to a lightweight rule-based extractor.
+- The app automatically creates its SQLite database on first run if one does not exist.
+- Users and demo accounts are seeded automatically.
+- Match scoring uses a combination of text, category, location, time, and image signals.
+- If no AI provider is configured, the app can still run in a simplified mode.
 
 ## License
 
-This project is currently provided for internal or educational use without a formal license file.
+This project currently does not include a formal open-source license file. Please check with the project owner before commercial or public redistribution.

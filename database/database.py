@@ -90,6 +90,8 @@ def init_db() -> None:
                 username TEXT UNIQUE NOT NULL,
                 password_hash TEXT NOT NULL,
                 full_name TEXT,
+                email TEXT,
+                phone_number TEXT,
                 role TEXT NOT NULL,
                 is_active INTEGER DEFAULT 1,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -119,6 +121,20 @@ def init_db() -> None:
                 timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 success INTEGER, error_type TEXT, latency_ms INTEGER
             );
+            CREATE TABLE IF NOT EXISTS notifications(
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                item_id INTEGER,
+                claim_id INTEGER,
+                type TEXT DEFAULT 'match_confirmed',
+                title TEXT,
+                message TEXT,
+                is_read INTEGER DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(user_id) REFERENCES users(id),
+                FOREIGN KEY(item_id) REFERENCES items(id),
+                FOREIGN KEY(claim_id) REFERENCES claims(id)
+            );
             CREATE INDEX IF NOT EXISTS idx_items_type ON items(type);
             CREATE INDEX IF NOT EXISTS idx_items_status ON items(status);
             CREATE INDEX IF NOT EXISTS idx_match_pair ON matches(lost_item_id, found_item_id);
@@ -127,6 +143,8 @@ def init_db() -> None:
             CREATE INDEX IF NOT EXISTS idx_claims_lost ON claims(lost_item_id);
             CREATE INDEX IF NOT EXISTS idx_claims_found ON claims(found_item_id);
             CREATE INDEX IF NOT EXISTS idx_claims_status ON claims(status);
+            CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id);
+            CREATE INDEX IF NOT EXISTS idx_notifications_user_read ON notifications(user_id, is_read);
             """
         )
         conn.commit()
@@ -139,8 +157,13 @@ def init_db() -> None:
         user_columns = [row[1] for row in conn.execute("PRAGMA table_info(users)").fetchall()]
         if not user_columns:
             conn.execute(
-                "CREATE TABLE users(id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE NOT NULL, password_hash TEXT NOT NULL, full_name TEXT, role TEXT NOT NULL, is_active INTEGER DEFAULT 1, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)"
+                "CREATE TABLE users(id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE NOT NULL, password_hash TEXT NOT NULL, full_name TEXT, email TEXT, phone_number TEXT, role TEXT NOT NULL, is_active INTEGER DEFAULT 1, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)"
             )
+        else:
+            if "email" not in user_columns:
+                conn.execute("ALTER TABLE users ADD COLUMN email TEXT")
+            if "phone_number" not in user_columns:
+                conn.execute("ALTER TABLE users ADD COLUMN phone_number TEXT")
 
         claim_columns = [row[1] for row in conn.execute("PRAGMA table_info(claims)").fetchall()]
         if not claim_columns:

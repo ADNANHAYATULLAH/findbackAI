@@ -90,21 +90,26 @@ def get_recent_items(limit: int = 20) -> List[Dict[str, Any]]:
 def seed_default_users() -> None:
     """Create application users for testing and role-based access control."""
     default_users = [
-        ("admin", "Admin@123", "System Administrator", "Administrator"),
-        ("staff", "Staff@123", "Operations Staff", "Staff"),
-        ("user1", "User@123", "Regular User 1", "Regular User"),
-        ("user2", "User@123", "Regular User 2", "Regular User"),
-        ("user3", "User@123", "Regular User 3", "Regular User"),
+        ("admin", "Admin@123", "System Administrator", "Administrator", "admin@findback.ai", "+1-555-0101"),
+        ("staff", "Staff@123", "Operations Staff", "Staff", "staff@findback.ai", "+1-555-0102"),
+        ("user1", "User@123", "Regular User 1", "Regular User", "user1@findback.ai", "+1-555-0103"),
+        ("user2", "User@123", "Regular User 2", "Regular User", "user2@findback.ai", "+1-555-0104"),
+        ("user3", "User@123", "Regular User 3", "Regular User", "user3@findback.ai", "+1-555-0105"),
     ]
     with get_connection() as conn:
-        for username, password, full_name, role in default_users:
+        for username, password, full_name, role, email, phone_number in default_users:
             existing = conn.execute(
                 "SELECT id FROM users WHERE username=?", (username,)
             ).fetchone()
             if existing is None:
                 conn.execute(
-                    "INSERT INTO users (username, password_hash, full_name, role) VALUES (?,?,?,?)",
-                    (username, hash_password(password), full_name, role),
+                    "INSERT INTO users (username, password_hash, full_name, email, phone_number, role) VALUES (?,?,?,?,?,?)",
+                    (username, hash_password(password), full_name, email, phone_number, role),
+                )
+            else:
+                conn.execute(
+                    "UPDATE users SET full_name=?, email=?, phone_number=?, role=? WHERE username=?",
+                    (full_name, email, phone_number, role, username),
                 )
         conn.commit()
 
@@ -316,6 +321,59 @@ def resolve_claim(claim_id: int, *, verification_status: str, handover_status: s
             "UPDATE claims SET resolved_at = CURRENT_TIMESTAMP WHERE id=?",
             (claim_id,),
         )
+        conn.commit()
+
+
+# ---------------------------------------------------------------------------
+# Notifications
+# ---------------------------------------------------------------------------
+
+def create_notification(
+    user_id: int,
+    title: str,
+    message: str,
+    notif_type: str = "match_confirmed",
+    item_id: Optional[int] = None,
+    claim_id: Optional[int] = None,
+) -> int:
+    """Insert a notification for a single user and return its new id."""
+    with get_connection() as conn:
+        cur = conn.execute(
+            """INSERT INTO notifications (user_id, item_id, claim_id, type, title, message)
+               VALUES (?,?,?,?,?,?)""",
+            (user_id, item_id, claim_id, notif_type, title, message),
+        )
+        conn.commit()
+        return int(cur.lastrowid)
+
+
+def get_notifications(user_id: int, limit: int = 50) -> List[Dict[str, Any]]:
+    with get_connection() as conn:
+        rows = conn.execute(
+            "SELECT * FROM notifications WHERE user_id=? ORDER BY created_at DESC, id DESC LIMIT ?",
+            (user_id, limit),
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+
+def get_unread_notification_count(user_id: int) -> int:
+    with get_connection() as conn:
+        row = conn.execute(
+            "SELECT COUNT(*) FROM notifications WHERE user_id=? AND is_read=0",
+            (user_id,),
+        ).fetchone()
+        return int(row[0]) if row else 0
+
+
+def mark_notification_read(notification_id: int) -> None:
+    with get_connection() as conn:
+        conn.execute("UPDATE notifications SET is_read=1 WHERE id=?", (notification_id,))
+        conn.commit()
+
+
+def mark_all_notifications_read(user_id: int) -> None:
+    with get_connection() as conn:
+        conn.execute("UPDATE notifications SET is_read=1 WHERE user_id=? AND is_read=0", (user_id,))
         conn.commit()
 
 
