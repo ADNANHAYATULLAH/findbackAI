@@ -40,6 +40,7 @@ from database.queries import (
     list_claims,
     mark_all_notifications_read,
     mark_notification_read,
+    reset_application_data,
 )
 from services.claim_service import approve_claim, create_claim_for_match, resolve_claim_handover
 from services.item_service import create_item
