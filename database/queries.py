@@ -401,3 +401,32 @@ def log_ai_usage(
             conn.commit()
     except Exception:
         pass
+def reset_application_data() -> bool:
+    """Reset all lost/found transaction data while preserving user accounts."""
+    with get_connection() as conn:
+        # Delete dependent/transactional data first
+        conn.execute("DELETE FROM notifications")
+        conn.execute("DELETE FROM claims")
+        conn.execute("DELETE FROM matches")
+        conn.execute("DELETE FROM item_features")
+        conn.execute("DELETE FROM ai_usage")
+
+        # Delete all lost/found items
+        conn.execute("DELETE FROM items")
+
+        # Reset SQLite ID counters for these tables
+        conn.execute("""
+            DELETE FROM sqlite_sequence
+            WHERE name IN (
+                'items',
+                'item_features',
+                'matches',
+                'claims',
+                'notifications',
+                'ai_usage'
+            )
+        """)
+
+        conn.commit()
+
+    return True
