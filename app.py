@@ -386,7 +386,7 @@ elif page == "User Management":
         st.error("Access denied. Staff or Administrator access required.")
         st.stop()
     st.title("User Management")
-        st.divider()
+    st.divider()
     st.subheader("⚠️ Reset FindBack Data")
 
     st.warning(
